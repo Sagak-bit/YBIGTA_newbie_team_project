@@ -4,179 +4,265 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            text-align: center;
+        :root{
+          --bg1:#f6f8ff;
+          --bg2:#eef6ff;
+          --card:#ffffff;
+          --accent:#4f46e5;
+          --muted:#6b7280;
+          --success:#16a34a;
+          --danger:#dc2626;
         }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        *{box-sizing:border-box}
+        body{
+          font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+          margin:0;
+          min-height:100vh;
+          background:linear-gradient(180deg,var(--bg1),var(--bg2));
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          padding:40px 20px;
         }
-        h1 {
-            color: #333;
+        .wrap{
+          width:100%;
+          max-width:920px;
         }
-        form {
-            margin: 20px 0;
+        header.app-header{
+          display:flex;
+          align-items:center;
+          gap:12px;
+          margin-bottom:18px;
         }
-        input {
-            padding: 10px;
-            margin: 5px 0;
-            width: 80%;
-            font-size: 16px;
+        .logo{
+          width:48px;
+          height:48px;
+          display:inline-grid;
+          place-items:center;
+          color:white;
+          font-weight:700;
+          background:linear-gradient(135deg,var(--accent),#06b6d4);
+          border-radius:10px;
+          box-shadow:0 6px 18px rgba(79,70,229,0.18);
         }
-        button {
-            padding: 10px 20px;
-            margin: 10px;
-            font-size: 16px;
-            cursor: pointer;
+        h1.brand{margin:0;font-size:1.25rem;color:#0f172a}
+        .message{
+          display:none;
+          padding:10px 14px;
+          border-radius:8px;
+          margin-bottom:16px;
+          font-weight:600;
         }
-        .section {
-            margin-bottom: 30px;
+        .message.show{display:block}
+        .message.success{background:rgba(22,163,74,0.12);color:var(--success);border:1px solid rgba(16,185,129,0.12)}
+        .message.error{background:rgba(220,38,38,0.08);color:var(--danger);border:1px solid rgba(220,38,38,0.08)}
+        .grid{
+          display:grid;
+          grid-template-columns:1fr;
+          gap:18px;
         }
-    </style>
+        @media(min-width:700px){
+          .grid{grid-template-columns:1fr 1fr}
+        }
+        .card{
+          background:var(--card);
+          border-radius:12px;
+          padding:20px;
+          box-shadow:0 6px 20px rgba(2,6,23,0.06);
+          border:1px solid rgba(15,23,42,0.04);
+        }
+        h2{margin:0 0 12px 0;color:#0f172a}
+        label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+        input{
+          width:100%;
+          padding:10px 12px;
+          border-radius:8px;
+          border:1px solid #e6e9ef;
+          outline:none;
+          font-size:15px;
+          margin-bottom:10px;
+        }
+        input:focus{box-shadow:0 6px 18px rgba(79,70,229,0.06);border-color:var(--accent)}
+        .btn{
+          display:inline-block;
+          padding:10px 16px;
+          background:var(--accent);
+          color:white;
+          border:none;
+          border-radius:10px;
+          cursor:pointer;
+          font-weight:600;
+          box-shadow:0 8px 24px rgba(79,70,229,0.12);
+        }
+        .btn.ghost{background:transparent;color:var(--accent);border:1px solid rgba(79,70,229,0.12);box-shadow:none}
+        .muted{color:var(--muted);font-size:14px}
+        .actions{display:flex;gap:10px;flex-wrap:wrap}
+        .center{text-align:center}
+      </style>
 </head>
 <body>
-    <div class="container" id="login-screen">
-        <h1>User Management</h1>
-        <div class="section" id="login-section">
-            <h2>Login</h2>
-            <form id="login-form">
-                <input type="email" id="login-email" placeholder="Email" required><br>
-                <input type="password" id="login-password" placeholder="Password" required><br>
-                <button type="button" onclick="loginUser()">Login</button>
-            </form>
-        </div>
-        <div class="section" id="register-section">
-            <h2>Register</h2>
-            <form id="register-form">
-                <input type="email" id="register-email" placeholder="Email" required><br>
-                <input type="password" id="register-password" placeholder="Password" required><br>
-                <input type="text" id="register-username" placeholder="Username" required><br>
-                <button type="button" onclick="registerUser()">Register</button>
-            </form>
-        </div>
-    </div>
+  <div class="wrap">
+    <header class="app-header">
+      <div class="logo">UM</div>
+      <h1 class="brand">User Management</h1>
+    </header>
 
-    <div class="container" id="logged-in-screen" style="display: none;">
-        <h1>Welcome, <span id="username"></span></h1>
-        <div class="section" id="update-password-section">
-            <h2>Update Password</h2>
-            <form id="update-password-form">
-                <input type="password" id="update-password" placeholder="New Password" required><br>
-                <button type="button" onclick="updatePassword()">Update Password</button>
-            </form>
-        </div>
+    <div id="message" class="message" role="status"></div>
 
-        <div class="section" id="delete-section">
-            <h2>Delete Account</h2>
-            <button type="button" onclick="deleteUser()">Delete Account</button>
+    <main class="grid" id="login-screen">
+      <section class="card" id="login-section">
+        <h2>Sign in</h2>
+        <p class="muted">Access your account</p>
+        <form id="login-form" onsubmit="event.preventDefault(); loginUser();">
+          <label for="login-email">Email</label>
+          <input type="email" id="login-email" placeholder="you@example.com" required>
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" placeholder="••••••••" required>
+          <div class="actions">
+            <button class="btn" type="submit">Login</button>
+            <button class="btn ghost" type="button" onclick="document.getElementById('register-email').focus()">Need an account?</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card" id="register-section">
+        <h2>Create account</h2>
+        <p class="muted">Join us — it’s quick and easy</p>
+        <form id="register-form" onsubmit="event.preventDefault(); registerUser();">
+          <label for="register-email">Email</label>
+          <input type="email" id="register-email" placeholder="you@example.com" required>
+          <label for="register-username">Username</label>
+          <input type="text" id="register-username" placeholder="Your display name" required>
+          <label for="register-password">Password</label>
+          <input type="password" id="register-password" placeholder="Choose a secure password" required>
+          <div class="actions">
+            <button class="btn" type="submit">Register</button>
+            <button class="btn ghost" type="button" onclick="document.getElementById('login-email').focus()">Have an account?</button>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <main class="card" id="logged-in-screen" style="display: none;">
+      <h2>Welcome, <span id="username"></span></h2>
+      <p class="muted">Manage your account below.</p>
+
+      <div class="section" id="update-password-section">
+        <h3>Update Password</h3>
+        <form id="update-password-form" onsubmit="event.preventDefault(); updatePassword();">
+          <input type="password" id="update-password" placeholder="New Password" required>
+          <div class="actions"><button class="btn" type="submit">Update Password</button></div>
+        </form>
+      </div>
+
+      <div class="section" id="delete-section">
+        <h3>Delete Account</h3>
+        <div class="actions">
+          <button class="btn ghost" type="button" onclick="deleteUser()">Delete Account</button>
         </div>
-    </div>
+      </div>
+    </main>
+  </div>
 
     <script>
-        let userEmail = null;
+      let userEmail = null;
 
-        function loginUser() {
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
+      const messageEl = () => document.getElementById('message');
 
-            fetch('/api/user/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ email, password })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(error => { throw new Error(error.detail); });
-                }
-                return response.json();
-            })
-            .then(data => {
-                userEmail = email; // 로그인 성공 시 이메일 저장
-                document.getElementById('username').textContent = `Hello, ${data.username}!`; // 사용자 이름 표시
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('logged-in-screen').style.display = 'block';
-            })
-            .catch(error => alert(`Login failed: ${error.message}`));
-        }
+      function showMessage(msg, type='success'){
+        const el = messageEl();
+        el.textContent = msg;
+        el.className = `message show ${type==='success' ? 'success' : 'error'}`;
+        setTimeout(()=>{ el.className = 'message'; }, 4000);
+      }
 
-        function registerUser() {
-            const email = document.getElementById('register-email').value;
-            const password = document.getElementById('register-password').value;
-            const username = document.getElementById('register-username').value;
+      function loginUser() {
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
 
-            fetch('/api/user/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ email, password, username })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(error => { throw new Error(error.detail); });
-                }
-                return response.json();
-            })
-            .then(() => alert(`Registration successful! Welcome, ${username}.`)) // 성공 메시지에 사용자 이름 표시
-            .catch(error => alert(`Registration failed: ${error.message}`));
-        }
+        fetch('/api/user/login', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({email, password})
+        })
+        .then(response => {
+          if (!response.ok) {
+            return response.json().then(error => { throw new Error(error.detail); });
+          }
+          return response.json();
+        })
+        .then(data => {
+          userEmail = email;
+          document.getElementById('username').textContent = data.username || email;
+          document.getElementById('login-screen').style.display = 'none';
+          document.getElementById('logged-in-screen').style.display = 'block';
+          showMessage(`Welcome back, ${data.username || 'user'}!`, 'success');
+        })
+        .catch(error => showMessage(`Login failed: ${error.message}`, 'error'));
+      }
 
-        function updatePassword() {
-            const newPassword = document.getElementById('update-password').value;
+      function registerUser() {
+        const email = document.getElementById('register-email').value;
+        const password = document.getElementById('register-password').value;
+        const username = document.getElementById('register-username').value;
 
-            fetch('/api/user/update-password', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ email: userEmail, new_password: newPassword })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(error => { throw new Error(error.detail); });
-                }
-                return response.json();
-            })
-            .then(() => alert(`Password successfully updated!`)) // 성공 메시지
-            .catch(error => alert(`Password update failed: ${error.message}`));
-        }
+        fetch('/api/user/register', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ email, password, username })
+        })
+        .then(response => {
+          if (!response.ok) {
+            return response.json().then(error => { throw new Error(error.detail); });
+          }
+          return response.json();
+        })
+        .then(() => showMessage(`Registration successful! Welcome, ${username}.`, 'success'))
+        .catch(error => showMessage(`Registration failed: ${error.message}`, 'error'));
+      }
 
-        function deleteUser() {
-            if (!userEmail) {
-                alert("No user is logged in.");
-                return;
-            }
+      function updatePassword() {
+        const newPassword = document.getElementById('update-password').value;
 
-            fetch('/api/user/delete', {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ email: userEmail }) // 저장된 이메일 전송
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(error => { throw new Error(error.detail); });
-                }
-                return response.json();
-            })
-            .then(() => {
-                alert(`User deleted successfully!`);
-                document.getElementById('logged-in-screen').style.display = 'none';
-                document.getElementById('login-screen').style.display = 'block';
-                userEmail = null; // 이메일 초기화
-            })
-            .catch(error => alert(`Account deletion failed: ${error.message}`));
-        }
+        fetch('/api/user/update-password', {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ email: userEmail, new_password: newPassword })
+        })
+        .then(response => {
+          if (!response.ok) {
+            return response.json().then(error => { throw new Error(error.detail); });
+          }
+          return response.json();
+        })
+        .then(() => showMessage('Password successfully updated!', 'success'))
+        .catch(error => showMessage(`Password update failed: ${error.message}`, 'error'));
+      }
+
+      function deleteUser() {
+        if (!userEmail) { showMessage('No user is logged in.', 'error'); return; }
+
+        if (!confirm('Are you sure you want to delete your account?')) return;
+
+        fetch('/api/user/delete', {
+          method: 'DELETE',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ email: userEmail })
+        })
+        .then(response => {
+          if (!response.ok) {
+            return response.json().then(error => { throw new Error(error.detail); });
+          }
+          return response.json();
+        })
+        .then(() => {
+          showMessage('User deleted successfully!', 'success');
+          document.getElementById('logged-in-screen').style.display = 'none';
+          document.getElementById('login-screen').style.display = 'grid';
+          userEmail = null;
+        })
+        .catch(error => showMessage(`Account deletion failed: ${error.message}`, 'error'));
+      }
     </script>
 </body>
 </html>
