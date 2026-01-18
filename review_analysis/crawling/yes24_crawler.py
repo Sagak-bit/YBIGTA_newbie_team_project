@@ -25,7 +25,8 @@ from utils.logger import setup_logger
 class Yes24Crawler(BaseCrawler):
     """
     YES24의 소년이 온다 리뷰를 Selenium으로 크롤링하는 클래스.
-    전체 리뷰 -> 추천순 기준으로 550개의 리뷰를 수집한다.
+    전체 리뷰 -> 추천순 항목에 접속하여
+    550개의 리뷰를 수집한다.
     """
 
 
@@ -124,7 +125,6 @@ class Yes24Crawler(BaseCrawler):
 
             try:
                 self.driver.get(url)
-                # 리뷰 HTML 조각이라도 reviewInfoGrp가 찍히는 구조(지금 너가 성공한 구조) 기준
                 wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".reviewInfoGrp")))
             except Exception as e:
                 self.logger.error(f"리뷰 페이지 로드 실패 (page={page}): {e}")
