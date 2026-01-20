@@ -3,7 +3,7 @@ from review_analysis.crawling.base_crawler import BaseCrawler
 class ExampleCrawler(BaseCrawler):
     def __init__(self, output_dir: str):
         super().__init__(output_dir)
-        self.base_url = 'https://example.com'
+        self.base_url = 'https://product.kyobobook.co.kr'
         
     def start_browser(self):
         pass 
