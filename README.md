@@ -38,19 +38,18 @@
 
 ## 1.2 Aladin (알라딘)
 
-
 **1) 별점 분포**
 - **현상**: 알라딘은 5점 만점 체계이며, 교보문고와 마찬가지로 고득점 비중이 높습니다.
-![Aladin Sc](review_analysis\plots\aladin_rating_hist.png)
+![Aladin Sc](review_analysis/plots/aladin_rating_hist.png)
 
 **2) 리뷰 길이 특성**
-- **현상**: 리뷰 길이가 전반적으로 짧고 균일합니다. 다만 간혹 긴 내용이 존재합니다
-![Aladin text len](review_analysis\plots\aladin_textlen_hist.png)
-
+- **현상**: 리뷰 길이가 전반적으로 짧고 균일합니다. 다만 간혹 긴 내용이 존재합니다.
+![Aladin text len](review_analysis/plots/aladin_textlen_hist.png)
 
 **3) 시계열 추이**
-- 2015년과 2025년에 크게 팔리는 모습을 확인할 수 있습니다
-![Aladin Trend](review_analysis\plots\aladin_monthly_count.png)
+- **현상**: 2015년과 2025년에 리뷰 수가 상대적으로 크게 증가하는 구간(스파이크)이 관측됩니다.
+![Aladin Trend](review_analysis/plots/aladin_monthly_count.png)
+
 
 ---
 
