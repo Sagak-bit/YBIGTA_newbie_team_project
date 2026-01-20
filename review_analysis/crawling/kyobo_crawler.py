@@ -9,6 +9,7 @@ from typing import Optional
 import pandas as pd
 from selenium import webdriver
 from selenium.common.exceptions import (
+    NoSuchElementException,
     StaleElementReferenceException,
     TimeoutException,
 )
@@ -226,92 +227,103 @@ class KyoboCrawler(BaseCrawler):
         """
         Set the review sort order via the jQuery UI selectmenu control.
 
+        Policy
+        ------
+        - Best-effort: try to switch to `order_text` (default: "최신순").
+        - If the sort control / option cannot be found or applied, do NOT fail.
+        It will proceed with the current/default order (often "좋아요순").
+
         Parameters
         ----------
         order_text:
             Visible option text to select (e.g., "최신순" or "좋아요 순").
-
-        Raises
-        ------
-        TimeoutException
-            If the control exists but lacks a usable id binding (unexpected DOM).
         """
         assert self.driver is not None
         wait = WebDriverWait(self.driver, 20)
 
         # Ensure header area is rendered (tabs + sort control).
-        wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".tab_list_wrap")))
-        wait.until(
-            EC.presence_of_element_located(
-                (By.CSS_SELECTOR, ".tab_list_wrap .right_area")
+        try:
+            wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".tab_list_wrap")))
+            wait.until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, ".tab_list_wrap .right_area"))
             )
-        )
-
-        def locate_button(d: webdriver.Chrome) -> Optional[WebElement]:
-            """
-            Locate the jQuery UI selectmenu button element.
-
-            Returns
-            -------
-            Optional[WebElement]
-                The most suitable selectmenu button if found, otherwise None.
-            """
-            candidates = d.find_elements(
-                By.CSS_SELECTOR, "span[role='combobox'].ui-selectmenu-button"
-            )
-            if not candidates:
-                return None
-
-            # Prefer a button that already has visible text.
-            for c in candidates:
-                txt = c.find_elements(By.CSS_SELECTOR, ".ui-selectmenu-text")
-                if txt and txt[0].text.strip():
-                    return c
-
-            return candidates[0]
-
-        btn = wait.until(locate_button)
-        assert btn is not None  # wait.until guarantees non-None
-
-        cur = btn.find_element(By.CSS_SELECTOR, ".ui-selectmenu-text").text.strip()
-        if cur == order_text:
+        except TimeoutException:
+            # If header isn't ready, don't block crawling.
+            self.logger.warning("Sort UI not ready. Proceeding with default order.")
             return
 
-        # Open dropdown.
-        self.driver.execute_script("arguments[0].scrollIntoView({block:'center'});", btn)
-        self.driver.execute_script("arguments[0].click();", btn)
-
-        btn_id = btn.get_attribute("id") or ""
-        if not btn_id:
-            raise TimeoutException("Sort button id missing")
-
-        menu_sel = f"ul[role='listbox'][aria-labelledby='{btn_id}']"
-        menu = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, menu_sel)))
-
-        opt = wait.until(
-            EC.element_to_be_clickable(
-                (
-                    By.XPATH,
-                    (
-                        f"//ul[@aria-labelledby='{btn_id}']"
-                        f"//div[@role='option' and normalize-space()='{order_text}']"
-                    ),
+        # 1) Find the sort button (best effort).
+        try:
+            btn = wait.until(
+                EC.presence_of_element_located(
+                    (By.CSS_SELECTOR, "span[role='combobox'].ui-selectmenu-button")
                 )
             )
-        )
+        except TimeoutException:
+            self.logger.warning("Sort button not found. Proceeding with default order.")
+            return
 
+        # 2) If already selected, return.
         try:
-            ActionChains(self.driver).move_to_element(opt).pause(0.05).click(opt).perform()
-        except Exception:
-            self.driver.execute_script("arguments[0].click();", opt)
+            cur = btn.find_element(By.CSS_SELECTOR, ".ui-selectmenu-text").text.strip()
+            if cur == order_text:
+                return
+        except (StaleElementReferenceException, NoSuchElementException):
+            # If it's flaky, just continue trying to click/open.
+            pass
 
-        wait.until(lambda _: menu.get_attribute("aria-hidden") == "true")
-        wait.until(
-            lambda d: locate_button(d)
-            .find_element(By.CSS_SELECTOR, ".ui-selectmenu-text")
-            .text.strip()
-            == order_text
+        # 3) Open the dropdown (JS click is usually the most stable here).
+        try:
+            self.driver.execute_script("arguments[0].scrollIntoView({block:'center'});", btn)
+            self.driver.execute_script("arguments[0].click();", btn)
+        except Exception:
+            self.logger.warning("Failed to open sort dropdown. Proceeding with default order.")
+            return
+
+        # 4) Find menu bound to aria-labelledby=<button id>.
+        btn_id = (btn.get_attribute("id") or "").strip()
+        if not btn_id:
+            # IMPORTANT: do NOT crash — just fall back to default order.
+            self.logger.warning("Sort button id missing. Proceeding with default order.")
+            return
+
+        menu_sel = f"ul[role='listbox'][aria-labelledby='{btn_id}']"
+        try:
+            wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, menu_sel)))
+        except TimeoutException:
+            self.logger.warning("Sort menu not visible. Proceeding with default order.")
+            return
+
+        # 5) Click the desired option. If not found/clickable => fallback.
+        opt_xpath = (
+            f"//ul[@aria-labelledby='{btn_id}']"
+            f"//div[@role='option' and normalize-space()='{order_text}']"
         )
+        try:
+            opt = wait.until(EC.element_to_be_clickable((By.XPATH, opt_xpath)))
+            self.driver.execute_script("arguments[0].scrollIntoView({block:'center'});", opt)
+            self.driver.execute_script("arguments[0].click();", opt)
+        except TimeoutException:
+            self.logger.warning("Sort option '%s' not found/clickable. Proceeding with default order.", order_text)
+            return
+        except Exception:
+            self.logger.warning("Sort click failed. Proceeding with default order.")
+            return
+
+        # 6) Verify (soft). If verification fails, still proceed.
+        try:
+            wait.until(
+                lambda d: d.find_element(
+                    By.CSS_SELECTOR,
+                    "span[role='combobox'].ui-selectmenu-button .ui-selectmenu-text",
+                ).text.strip()
+                == order_text
+            )
+        except TimeoutException:
+            # Do NOT raise; just warn and proceed.
+            self.logger.warning("Sort order may not have applied. Proceeding with default order.")
+            return
+
 
     def _scrape_current_page(self, target: int) -> None:
         """
