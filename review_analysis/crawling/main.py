@@ -1,3 +1,12 @@
+import sys
+import os
+
+# 현재 파일 위치(preprocessing)에서 두 단계 위(YBIGTA_newbie_team_project)를 경로에 추가
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(current_dir, "..", ".."))
+sys.path.append(project_root)
+
+
 from argparse import ArgumentParser
 from typing import Dict, Type
 from review_analysis.crawling.base_crawler import BaseCrawler
