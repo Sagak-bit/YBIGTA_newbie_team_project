@@ -48,11 +48,24 @@
 ---
 
 ## 1.3 YES24 (예스24)
-> *[YES24 크롤러 실행 결과 그래프를 바탕으로 작성해주세요]*
 
-**1) 별점 및 리뷰 특성**
-- **현상**: [예: 한줄평과 회원리뷰가 섞여 있어 길이 분포가 양극화(Bimodal) 되어 나타납니다.]
-- **해석**: [내용 채우기]
+**1) 별점 및 리뷰 특성 (Rating Distribution)**
+- **현상**: 5점 만점 체계이며, 교보문고와 마찬가지로 5점의 비율이 압도적으로 높습니다. 
+- **해석**: 평점의 대부분이 고득점이므로 텍스트 내용 기반의 분석이 중요합니다. 
+<img width="1280" height="960" alt="yes24_eda_rating_hist" src="https://github.com/user-attachments/assets/fa35c5de-7acf-49cc-a3e5-9ff7c2fe94d6" />
+
+
+**2) 리뷰 길이 특성 (Review Length)**
+- **현상** : 대부분의 리뷰가 단문의 리뷰로 right-skew 형태의 그래프를 보이나, 4000자, 6000자, 12000자 정도              의 outlier도 존재합니다. 
+- **해석** : 초장문의 리뷰를 쓰는 정성 리뷰어들이 존재하는 것으로 보입니다. 장문 리뷰는 책의 내용을 포함하는 경우가 많으므로, 토픽 모델링이나 키워드 추출 시 핵심적인 역할을 할 것으로 보입니다. 
+<img width="1280" height="960" alt="yes24_eda_textlen_hist" src="https://github.com/user-attachments/assets/cbb49b0d-b8c8-412b-ac86-84c90dc93e62" />
+
+
+**3) 시계열 추이 (Monthly Trend)**
+- **현상** : 2024년 이전까지는 낮은 빈도를 유지하다가 **최근(2024년 하반기 이후) 급격한 스파이크(Spike)**가 관측됩니다. 2016년에도 한번의 spike가 관측됩니다.
+- **해석** : 2016년은 맨부커상, 2024~2025년은 노벨상 수상의 영향으로 리뷰 수가 증가한 것으로 보입니다.
+   <img width="1280" height="960" alt="yes24_eda_monthly_count_line" src="https://github.com/user-attachments/assets/230b438c-9155-4be3-8712-387107d33448" />
+
 ---
 
 # 2. 전처리 & Feature Engineering (FE)
