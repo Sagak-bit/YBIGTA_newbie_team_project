@@ -1,0 +1,7 @@
+types-PyYAML
+types-Pygments
+types-cffi
+types-colorama
+types-pyOpenSSL
+types-pywin32
+types-ujson
