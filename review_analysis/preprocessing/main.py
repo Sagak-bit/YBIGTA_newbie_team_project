@@ -4,6 +4,7 @@ from argparse import ArgumentParser
 from typing import Dict, Type
 from review_analysis.preprocessing.base_processor import BaseDataProcessor
 from review_analysis.preprocessing.example_processor import ExampleProcessor
+from review_analysis.preprocessing.yes24_processor import Yes24Processor
 
 
 # 모든 preprocessing 클래스를 예시 형식으로 적어주세요. 
@@ -11,6 +12,7 @@ from review_analysis.preprocessing.example_processor import ExampleProcessor
 PREPROCESS_CLASSES: Dict[str, Type[BaseDataProcessor]] = {
     "reviews_example": ExampleProcessor,
     # key는 크롤링한 csv파일 이름으로 적어주세요! ex. reviews_naver.csv -> reviews_naver
+    "reviews_yes24": Yes24Processor
 }
 
 REVIEW_COLLECTIONS = glob.glob(os.path.join("..","..","database", "reviews_*.csv"))
