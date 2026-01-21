@@ -19,6 +19,22 @@
 - 산업공학과 22학번(03년생)
 - 안녕하세요! DS team에 있고, 열심히 참여하도록 하겠습니다!
 
+## GitHub 협업 과제 증빙 이미지
+
+브랜치 보호 규칙 적용, main 푸시 거부, PR 리뷰/머지 과정을 아래 이미지로 첨부합니다.
+
+### 1) Branch protection rule 적용
+
+![Branch protection rule](github/branch_protection.png)
+
+### 2) main 브랜치 push 거부
+
+![Push rejected on main](github/push_rejected.png)
+
+### 3) Pull Request + Review + Merge 확인
+
+![Review and merged](github/review_and_merged.png)
+
 ---
 
 # 📊 도서 리뷰 데이터 수집 및 분석 프로젝트
