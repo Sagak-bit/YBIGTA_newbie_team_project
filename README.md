@@ -221,3 +221,9 @@ python -m review_analysis.crawling.main --output_dir database --crawler kyobo
 # 교보문고 결과만 전처리
 python -m review_analysis.preprocessing.main --output_dir database --preprocessor reviews_kyobo
 ```
+
+## 4.4 웹 과제 실행 (FastAPI)
+```bash
+# 서버 실행 (실행 후 http://localhost:8000/docs에서 기능 테스트 가능)
+uvicorn app.main:app --reload
+```
