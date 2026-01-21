@@ -33,7 +33,7 @@
 
 ### 3) Pull Request + Review + Merge 확인
 
-![Review and merged](github/review_and_merged.png)
+![Review and merged](github/review_and_merge.png)
 
 ---
 
