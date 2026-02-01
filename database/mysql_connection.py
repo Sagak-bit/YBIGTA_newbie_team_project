@@ -6,6 +6,8 @@ import os
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base  # <-- 이거 추가!
+
 
 load_dotenv()
 
@@ -51,12 +53,14 @@ engine = create_engine(
     DB_URL,
     echo=SQLALCHEMY_ECHO,
     pool_pre_ping=True,     # 방어: 끊긴 커넥션 재검증
-    future=True,
 )
 
 SessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
     bind=engine,
-    future=True,
 )
+
+Base = declarative_base()
+
+
