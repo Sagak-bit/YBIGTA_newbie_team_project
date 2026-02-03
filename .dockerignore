@@ -1,0 +1,14 @@
+.git
+.env
+__pycache__
+venv/
+.idea/
+.vscode/
+*.png
+Dockerfile
+README.md
+aws/
+test/
+
+*.pem
+*.key
