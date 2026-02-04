@@ -227,3 +227,128 @@ python -m review_analysis.preprocessing.main --output_dir database --preprocesso
 # 서버 실행 (실행 후 http://localhost:8000/docs에서 기능 테스트 가능)
 uvicorn app.main:app --reload
 ```
+
+---
+
+# 5. Docker & AWS 배포
+
+## 5.1 Docker Hub 이미지
+
+> **Docker Hub 주소**: `https://hub.docker.com/r/<DOCKER_USERNAME>/ybigta-newbie-project`
+>
+> (팀원 B가 Docker Hub에 Push 후 위 주소를 실제 값으로 업데이트해주세요)
+
+### 로컬에서 Docker 이미지 빌드 및 실행
+
+```bash
+# 이미지 빌드
+docker build -t ybigta-newbie-project .
+
+# 컨테이너 실행 (환경변수 파일 사용)
+docker run -d \
+  --name ybigta-app \
+  -p 8000:8000 \
+  --env-file .env \
+  ybigta-newbie-project
+
+# 또는 환경변수 직접 지정
+docker run -d \
+  --name ybigta-app \
+  -p 8000:8000 \
+  -e MYSQL_USER=<user> \
+  -e MYSQL_PASSWORD=<password> \
+  -e MYSQL_HOST=<host> \
+  -e MYSQL_PORT=3306 \
+  -e MYSQL_DATABASE=<database> \
+  -e MONGO_URL=<mongo_url> \
+  -e MONGO_DB_NAME=ybigta \
+  ybigta-newbie-project
+```
+
+---
+
+## 5.2 CI/CD 파이프라인 (GitHub Actions)
+
+`main` 브랜치에 push하면 자동으로 다음 작업이 실행됩니다:
+
+1. **Job 1: Build & Push** - Docker 이미지를 빌드하고 Docker Hub에 Push
+2. **Job 2: Deploy to EC2** - EC2 서버에 SSH 접속 후 최신 이미지로 컨테이너 재배포
+
+### GitHub Repository Secrets 설정 (필수)
+
+GitHub Repository → Settings → Secrets and variables → Actions에서 아래 Secrets를 등록해야 합니다:
+
+| Secret Name | 설명 | 예시 |
+|-------------|------|------|
+| `DOCKER_USERNAME` | Docker Hub 사용자명 | `myusername` |
+| `DOCKER_PASSWORD` | Docker Hub 비밀번호 또는 Access Token | `dckr_pat_xxxxx` |
+| `EC2_HOST` | EC2 인스턴스 퍼블릭 IP | `3.35.xxx.xxx` |
+| `EC2_USER` | EC2 접속 사용자 | `ec2-user` (Amazon Linux) 또는 `ubuntu` |
+| `EC2_SSH_KEY` | EC2 .pem 키 내용 (전체 복사) | `-----BEGIN RSA PRIVATE KEY-----...` |
+| `MYSQL_USER` | RDS MySQL 사용자명 | `admin` |
+| `MYSQL_PASSWORD` | RDS MySQL 비밀번호 | `yourpassword` |
+| `MYSQL_HOST` | RDS Endpoint | `mydb.xxxxx.ap-northeast-2.rds.amazonaws.com` |
+| `MYSQL_PORT` | MySQL 포트 | `3306` |
+| `MYSQL_DATABASE` | 데이터베이스 이름 | `ybigta` |
+| `MONGO_URL` | MongoDB Atlas 연결 문자열 | `mongodb+srv://user:pass@cluster.xxxxx.mongodb.net/` |
+| `MONGO_DB_NAME` | MongoDB 데이터베이스 이름 | `ybigta` |
+
+---
+
+## 5.3 EC2 보안 그룹 설정
+
+EC2 인스턴스의 보안 그룹에서 다음 인바운드 규칙이 필요합니다:
+
+| 유형 | 포트 | 소스 | 용도 |
+|------|------|------|------|
+| SSH | 22 | 내 IP 또는 0.0.0.0/0 | SSH 접속 |
+| Custom TCP | 8000 | 0.0.0.0/0 | FastAPI 서버 |
+
+---
+
+# 6. API 실행 결과 (배포 완료 후)
+
+> 아래 캡처는 EC2에 배포 완료 후 Swagger (`http://<EC2_IP>:8000/docs`)에서 API를 테스트한 결과입니다.
+> IP 주소가 보이도록 캡처해주세요.
+
+## 6.1 User API
+
+### POST /api/user/register (회원가입)
+<!-- ![User Register](screenshots/api_user_register.png) -->
+> TODO: 캡처 이미지 첨부
+
+### POST /api/user/login (로그인)
+<!-- ![User Login](screenshots/api_user_login.png) -->
+> TODO: 캡처 이미지 첨부
+
+### PUT /api/user/update-password (비밀번호 변경)
+<!-- ![User Update Password](screenshots/api_user_update_password.png) -->
+> TODO: 캡처 이미지 첨부
+
+### DELETE /api/user/delete (회원 탈퇴)
+<!-- ![User Delete](screenshots/api_user_delete.png) -->
+> TODO: 캡처 이미지 첨부
+
+## 6.2 Review API
+
+### POST /review/preprocess/{site_name} (리뷰 전처리)
+<!-- ![Review Preprocess](screenshots/api_review_preprocess.png) -->
+> TODO: 캡처 이미지 첨부
+
+---
+
+# 7. GitHub Actions 실행 결과
+
+> CI/CD 파이프라인이 성공적으로 실행된 화면을 캡처합니다.
+
+## 7.1 GitHub Actions 성공 화면
+<!-- ![GitHub Actions Success](screenshots/github_actions_success.png) -->
+> TODO: 캡처 이미지 첨부
+
+## 7.2 Build & Push Job 상세
+<!-- ![Build Job](screenshots/github_actions_build.png) -->
+> TODO: 캡처 이미지 첨부
+
+## 7.3 Deploy to EC2 Job 상세
+<!-- ![Deploy Job](screenshots/github_actions_deploy.png) -->
+> TODO: 캡처 이미지 첨부
