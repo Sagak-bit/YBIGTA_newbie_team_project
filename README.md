@@ -234,9 +234,7 @@ uvicorn app.main:app --reload
 
 ## 5.1 Docker Hub 이미지
 
-> **Docker Hub 주소**: `https://hub.docker.com/r/<DOCKER_USERNAME>/ybigta-newbie-project`
->
-> (팀원 B가 Docker Hub에 Push 후 위 주소를 실제 값으로 업데이트해주세요)
+> **Docker Hub 주소**: https://hub.docker.com/r/0chan1/ybigta-newbie-project
 
 ### 로컬에서 Docker 이미지 빌드 및 실행
 
@@ -344,3 +342,100 @@ EC2 인스턴스의 보안 그룹에서 다음 인바운드 규칙이 필요합�
 
 ## 7.3 Deploy to EC2 Job 상세
 ![Deploy Job](screenshots/github_actions_deploy.png)
+
+---
+
+# 8. 프로젝트 회고
+
+## 8.1 프로젝트를 진행하며 깨달은 점
+
+### CI/CD 파이프라인의 중요성
+수동으로 서버에 접속해서 코드를 배포하는 것은 번거롭고 실수가 발생하기 쉽습니다. GitHub Actions를 활용한 CI/CD 파이프라인을 구축하면서, 코드를 push하는 것만으로 자동으로 빌드-테스트-배포가 이루어지는 것이 얼마나 효율적인지 체감했습니다. 특히 팀 프로젝트에서는 누가 언제 배포했는지 기록이 남고, 문제가 생기면 이전 버전으로 쉽게 롤백할 수 있다는 점이 큰 장점이었습니다.
+
+### Docker 컨테이너화의 장점
+"내 컴퓨터에서는 되는데..."라는 문제를 Docker로 해결할 수 있었습니다. 로컬 개발 환경과 EC2 배포 환경이 달라서 발생할 수 있는 문제들을 Docker 이미지로 동일한 환경을 보장함으로써 예방할 수 있었습니다. 또한 `.dockerignore`를 통해 불필요한 파일(예: `.env`, `.pem`)이 이미지에 포함되지 않도록 관리하는 것이 보안상 중요하다는 것을 배웠습니다.
+
+### 환경변수와 Secrets 관리
+민감한 정보(DB 비밀번호, API 키 등)를 코드에 직접 작성하면 보안 문제가 발생합니다. GitHub Secrets를 활용하여 민감 정보를 안전하게 관리하고, 런타임에 환경변수로 주입하는 방식을 배웠습니다. `.env` 파일은 `.gitignore`에 추가하여 절대 Git에 커밋되지 않도록 주의해야 합니다.
+
+---
+
+## 8.2 마주친 오류와 해결 경험
+
+### 오류 1: GitHub Actions에서 EC2 SSH 접속 실패
+
+**증상**
+```
+ssh: connect to host x.x.x.x port 22: Connection timed out
+```
+
+**원인**
+EC2 보안 그룹에서 SSH(22번 포트) 인바운드 규칙이 설정되지 않았거나, 특정 IP에서만 접속 가능하도록 제한되어 있었습니다.
+
+**해결**
+EC2 보안 그룹의 인바운드 규칙에 SSH(22번 포트)를 `0.0.0.0/0` 또는 GitHub Actions IP 대역에서 접속 가능하도록 설정했습니다.
+
+---
+
+### 오류 2: Docker 컨테이너 내에서 DB 연결 실패
+
+**증상**
+```
+RuntimeError: MySQL env missing: MYSQL_HOST, MYSQL_PASSWORD ...
+```
+
+**원인**
+Docker 컨테이너 실행 시 환경변수를 전달하지 않아서, 컨테이너 내부에서 `.env` 파일을 찾을 수 없었습니다.
+
+**해결**
+`docker run` 명령어에 `-e` 옵션으로 환경변수를 명시적으로 전달했습니다:
+```bash
+docker run -d \
+  -e MYSQL_USER=${{ secrets.MYSQL_USER }} \
+  -e MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }} \
+  ...
+```
+
+---
+
+### 오류 3: "User already Exists" 응답
+
+**증상**
+회원가입 API 호출 시 400 에러와 함께 `"User already Exists."` 메시지 반환
+
+**원인**
+이미 동일한 이메일로 가입된 사용자가 존재했습니다. 이는 오류가 아니라 **정상적인 비즈니스 로직**입니다.
+
+**해결**
+다른 이메일로 테스트하거나, 기존 사용자를 삭제 후 재시도했습니다. API가 정상 동작하고 있음을 확인했습니다.
+
+---
+
+## 8.3 관련 개념 정리
+
+### GitHub Actions란?
+GitHub에서 제공하는 CI/CD 플랫폼입니다. `.github/workflows/` 디렉토리에 YAML 파일로 워크플로우를 정의하면, 특정 이벤트(push, PR 등) 발생 시 자동으로 작업이 실행됩니다.
+
+**주요 구성 요소:**
+- **Workflow**: 자동화된 프로세스 전체 (`.yaml` 파일)
+- **Job**: 워크플로우 내의 작업 단위 (예: build, deploy)
+- **Step**: Job 내의 개별 명령어
+- **Runner**: 워크플로우가 실행되는 서버 (GitHub 호스팅 또는 Self-hosted)
+
+### Docker란?
+애플리케이션을 컨테이너라는 격리된 환경에서 실행할 수 있게 해주는 플랫폼입니다.
+
+**핵심 개념:**
+- **Image**: 컨테이너 실행에 필요한 파일 시스템과 설정을 담은 템플릿
+- **Container**: 이미지를 기반으로 실행된 인스턴스
+- **Dockerfile**: 이미지를 빌드하기 위한 명령어 모음
+- **Docker Hub**: Docker 이미지 저장소 (GitHub과 비슷한 역할)
+
+### CI/CD란?
+- **CI (Continuous Integration)**: 코드 변경 시 자동으로 빌드 및 테스트 수행
+- **CD (Continuous Deployment/Delivery)**: 테스트 통과 후 자동으로 배포
+
+**장점:**
+- 빠른 피드백 (코드 문제 조기 발견)
+- 일관된 배포 프로세스
+- 수동 작업 최소화로 인한 휴먼 에러 감소
