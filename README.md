@@ -314,26 +314,21 @@ EC2 인스턴스의 보안 그룹에서 다음 인바운드 규칙이 필요합�
 ## 6.1 User API
 
 ### POST /api/user/register (회원가입)
-<!-- ![User Register](screenshots/api_user_register.png) -->
-> TODO: 캡처 이미지 첨부
+![User Register](screenshots/api_user_register.png)
 
 ### POST /api/user/login (로그인)
-<!-- ![User Login](screenshots/api_user_login.png) -->
-> TODO: 캡처 이미지 첨부
+![User Login](screenshots/api_user_login.png)
 
 ### PUT /api/user/update-password (비밀번호 변경)
-<!-- ![User Update Password](screenshots/api_user_update_password.png) -->
-> TODO: 캡처 이미지 첨부
+![User Update Password](screenshots/api_update_password.png)
 
 ### DELETE /api/user/delete (회원 탈퇴)
-<!-- ![User Delete](screenshots/api_user_delete.png) -->
-> TODO: 캡처 이미지 첨부
+![User Delete](screenshots/api_user_delete.png)
 
 ## 6.2 Review API
 
 ### POST /review/preprocess/{site_name} (리뷰 전처리)
-<!-- ![Review Preprocess](screenshots/api_review_preprocess.png) -->
-> TODO: 캡처 이미지 첨부
+![Review Preprocess](screenshots/api_review_preprocess.png)
 
 ---
 
@@ -342,13 +337,10 @@ EC2 인스턴스의 보안 그룹에서 다음 인바운드 규칙이 필요합�
 > CI/CD 파이프라인이 성공적으로 실행된 화면을 캡처합니다.
 
 ## 7.1 GitHub Actions 성공 화면
-<!-- ![GitHub Actions Success](screenshots/github_actions_success.png) -->
-> TODO: 캡처 이미지 첨부
+![GitHub Actions Success](screenshots/github_actions_success.png)
 
 ## 7.2 Build & Push Job 상세
-<!-- ![Build Job](screenshots/github_actions_build.png) -->
-> TODO: 캡처 이미지 첨부
+![Build Job](screenshots/github_actions_build.png)
 
 ## 7.3 Deploy to EC2 Job 상세
-<!-- ![Deploy Job](screenshots/github_actions_deploy.png) -->
-> TODO: 캡처 이미지 첨부
+![Deploy Job](screenshots/github_actions_deploy.png)
