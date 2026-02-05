@@ -34,3 +34,9 @@ matplotlib
 seaborn
 pytest
 app
+streamlit
+langchain
+langchain-community
+langchain-upstage
+langgraph
+faiss-cpu
