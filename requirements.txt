@@ -33,8 +33,7 @@ python-dotenv
 matplotlib
 seaborn
 pytest
-app
-streamlit
+streamlit>=1.30.0
 langchain
 langchain-community
 langchain-upstage
