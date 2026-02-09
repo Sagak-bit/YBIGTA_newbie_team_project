@@ -439,3 +439,175 @@ GitHub에서 제공하는 CI/CD 플랫폼입니다. `.github/workflows/` 디렉�
 - 빠른 피드백 (코드 문제 조기 발견)
 - 일관된 배포 프로세스
 - 수동 작업 최소화로 인한 휴먼 에러 감소
+
+---
+
+# 9. RAG + Agent 챗봇
+
+## 9.1 개요
+
+도서 리뷰 데이터를 활용한 **RAG(Retrieval-Augmented Generation) + Agent** 기반 챗봇입니다.
+사용자 질문을 LLM이 자동 분류(라우팅)하여, 질문 유형에 따라 적절한 처리 파이프라인으로 분기합니다.
+
+- **프레임워크**: LangGraph (StateGraph 기반 워크플로우)
+- **LLM**: Upstage Solar Mini Chat
+- **Embedding**: Upstage Solar Embedding Large
+- **Vector Store**: FAISS (로컬 인덱스)
+- **UI**: Streamlit
+
+---
+
+## 9.2 아키텍처
+
+```
+사용자 입력
+    │
+    ▼
+┌──────────┐
+│  Router  │  ← LLM이 입력을 3가지 유형으로 분류
+└──────────┘
+    │
+    ├─ "chat"          → [Chat Node]          → 일반 대화 응답
+    │
+    ├─ "subject_info"  → [Subject Info Node]  → 도서 메타정보 조회
+    │                          │                  (subjects.json)
+    │                          ▼
+    │                    [Chat Node]           → 초안 정리 후 최종 응답
+    │
+    └─ "rag_review"    → [RAG Review Node]    → FAISS 검색 → 리뷰 컨텍스트 생성
+                               │                  → LLM이 컨텍스트 기반 답변 생성
+                               ▼
+                         [Chat Node]           → 초안 정리 후 최종 응답
+```
+
+### 라우팅 분류 기준
+
+| 라벨 | 설명 | 예시 질문 |
+|------|------|-----------|
+| `chat` | 일반 대화, 인사, 잡담 | "안녕하세요", "오늘 날씨 어때?" |
+| `subject_info` | 도서/상품의 기본 정보 요청 | "소년이 온다 정보 알려줘" |
+| `rag_review` | 리뷰 기반 의견, 요약, 장단점 질문 | "이 책 리뷰 요약해줘", "평점은 어때?" |
+
+---
+
+## 9.3 주요 컴포넌트
+
+### Router (`st_app/graph/router.py`)
+- LLM에게 사용자 입력을 전달하여 `chat` / `subject_info` / `rag_review` 중 하나로 분류
+- 분류가 불확실한 경우 기본값 `chat`으로 fallback
+
+### RAG Review Node (`st_app/graph/nodes/rag_review_node.py`)
+- FAISS 벡터스토어에서 사용자 질문과 유사한 리뷰 4건을 검색 (similarity search)
+- 검색된 리뷰를 컨텍스트로 구성하여 LLM에게 전달
+- LLM이 **컨텍스트에 근거한 답변만** 생성 (hallucination 방지)
+
+### Subject Info Node (`st_app/graph/nodes/subject_info_node.py`)
+- `st_app/db/subject_information/subjects.json`에 등록된 도서 메타정보를 조회
+- LLM이 사용자 입력과 가장 관련 있는 도서를 매칭하여 제목/저자/요약/키워드를 반환
+
+### Chat Node (`st_app/graph/nodes/chat_node.py`)
+- **일반 대화**: 대화 히스토리를 포함하여 자연스러운 응답 생성
+- **Finalizer 역할**: `subject_info` 또는 `rag_review`에서 생성한 초안(`draft_response`)을 간결하고 자연스럽게 정리
+
+### RAG Retriever (`st_app/rag/retriever.py`)
+- `database/preprocessed_reviews_*.csv`에서 리뷰 데이터를 로드
+- Upstage Solar Embedding으로 벡터화 후 FAISS 인덱스 생성 및 저장
+- 이미 빌드된 인덱스가 있으면 재사용하여 효율적으로 동작
+
+---
+
+## 9.4 상태 관리 (GraphState)
+
+LangGraph의 각 노드가 공유하는 상태 객체입니다.
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `user_input` | `str` | 사용자 입력 텍스트 |
+| `messages` | `List[BaseMessage]` | 대화 히스토리 (Human/AI 메시지) |
+| `route` | `Optional[str]` | Router가 결정한 분기 라벨 |
+| `subject_key` | `Optional[str]` | 매칭된 도서 키 |
+| `draft_response` | `Optional[str]` | 중간 단계 답변 초안 |
+| `response` | `Optional[str]` | 최종 응답 |
+| `retrieved_docs` | `Optional[list]` | RAG 검색 결과 문서 리스트 |
+
+---
+
+## 9.5 실행 방법
+
+### 환경변수 설정
+
+Upstage API 키가 필요합니다.
+
+```bash
+# 환경변수로 설정
+export UPSTAGE_API_KEY="your-api-key-here"
+```
+
+또는 Streamlit secrets 사용:
+```toml
+# .streamlit/secrets.toml
+UPSTAGE_API_KEY = "your-api-key-here"
+```
+
+### FAISS 인덱스 빌드 (최초 1회)
+
+```bash
+python -m st_app.rag.embedder
+```
+
+> 이미 `st_app/db/faiss_index/`에 인덱스 파일이 존재하면 자동으로 재사용되므로 생략 가능합니다.
+
+### Streamlit 앱 실행
+
+```bash
+streamlit run streamlit_app.py
+```
+
+실행 후 `http://localhost:8501`에서 챗봇을 사용할 수 있습니다.
+
+---
+
+## 9.6 실행 결과 스크린샷
+
+### 일반 대화 (chat 경로)
+![Chat Example](screenshots/rag_chat.png)
+
+### 리뷰 기반 RAG 질의 (rag_review 경로)
+![RAG Review Example](screenshots/rag_review_query.png)
+
+### 도서 정보 조회 (subject_info 경로)
+![Subject Info Example](screenshots/rag_subject_info.png)
+
+---
+
+## 9.7 프로젝트 디렉토리 구조 (RAG/Agent 관련)
+
+```
+st_app/
+├── __init__.py
+├── db/
+│   ├── faiss_index/          # FAISS 벡터 인덱스
+│   │   ├── index.faiss
+│   │   ├── index.pkl
+│   │   └── meta.json
+│   └── subject_information/  # 도서 메타정보
+│       └── subjects.json
+├── graph/
+│   ├── __init__.py
+│   ├── build_graph.py        # LangGraph 워크플로우 빌드
+│   ├── router.py             # LLM 기반 라우터
+│   └── nodes/
+│       ├── __init__.py
+│       ├── chat_node.py      # 일반 대화 + Finalizer
+│       ├── rag_review_node.py  # RAG 리뷰 검색 + 답변
+│       └── subject_info_node.py  # 도서 정보 조회
+├── rag/
+│   ├── __init__.py
+│   ├── embedder.py           # FAISS 인덱스 빌드 CLI
+│   ├── llm.py                # Upstage LLM/Embedding 초기화
+│   ├── prompt.py             # RAG 프롬프트 템플릿
+│   └── retriever.py          # FAISS 검색 + 인덱스 관리
+└── utils/
+    ├── __init__.py
+    └── state.py              # GraphState 정의
+```
